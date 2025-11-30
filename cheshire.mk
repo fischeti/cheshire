@@ -99,8 +99,6 @@ $(CHS_ROOT)/hw/regs/cheshire_regs_addrmap_pkg.sv: $(CHS_ROOT)/hw/regs/cheshire_r
 # CLINT
 CLINTCORES ?= 1
 include $(CLINTROOT)/clint.mk
-$(CLINTROOT)/.generated:
-	flock -x $@ $(MAKE) clint && touch $@
 
 # OpenTitan peripherals
 include $(OTPROOT)/otp.mk
@@ -130,7 +128,7 @@ include $(IDMA_ROOT)/idma.mk
 CHS_HW_ALL += $(IDMA_FULL_RTL)
 CHS_HW_ALL += $(CHS_ROOT)/hw/regs/cheshire_regs_addrmap_pkg.sv
 CHS_HW_ALL += $(CHS_ROOT)/hw/regs/cheshire_regs_pkg.sv $(CHS_ROOT)/hw/regs/cheshire_regs.sv
-CHS_HW_ALL += $(CLINTROOT)/.generated
+CHS_HW_ALL += $(CLINTROOT)/src/clint_reg.sv
 CHS_HW_ALL += $(OTPROOT)/.generated
 CHS_HW_ALL += $(AXIRTROOT)/.generated
 CHS_HW_ALL += $(AXI_VGA_ROOT)/.generated
