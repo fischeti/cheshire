@@ -1465,25 +1465,31 @@ module cheshire_soc import cheshire_pkg::*; #(
     );
 
     axi_mst_req_t axi_dma_req;
+    axi_mst_req_t axi_dma_desc_req;
 
     always_comb begin
       axi_in_req[AxiIn.dma]         = axi_dma_req;
       axi_in_req[AxiIn.dma].aw.user = Cfg.AxiUserDefault;
       axi_in_req[AxiIn.dma].w.user  = Cfg.AxiUserDefault;
       axi_in_req[AxiIn.dma].ar.user = Cfg.AxiUserDefault;
+      axi_in_req[AxiIn.dma_desc]         = axi_dma_desc_req;
+      axi_in_req[AxiIn.dma_desc].ar.user = Cfg.AxiUserDefault;
     end
 
-    cheshire_idma_wrap #(
-      .AxiAddrWidth     ( Cfg.AddrWidth     ),
-      .AxiDataWidth     ( Cfg.AxiDataWidth  ),
-      .AxiIdWidth       ( Cfg.AxiMstIdWidth ),
-      .AxiUserWidth     ( Cfg.AxiUserWidth  ),
-      .AxiSlvIdWidth    ( AxiSlvIdWidth     ),
+    cheshire_idma_desc64_wrap #(
+      .AxiAddrWidth     ( Cfg.AddrWidth          ),
+      .AxiDataWidth     ( Cfg.AxiDataWidth        ),
+      .AxiIdWidth       ( Cfg.AxiMstIdWidth       ),
+      .AxiUserWidth     ( Cfg.AxiUserWidth        ),
+      .AxiSlvIdWidth    ( AxiSlvIdWidth           ),
+      .AxiMaxWriteTxns  ( Cfg.DmaConfMaxWriteTxns ),
+      .AxiMaxReadTxns   ( Cfg.DmaConfMaxReadTxns  ),
       .NumAxInFlight    ( Cfg.DmaNumAxInFlight    ),
       .MemSysDepth      ( Cfg.DmaMemSysDepth      ),
-      .JobFifoDepth     ( Cfg.DmaJobFifoDepth     ),
+      .InputFifoDepth   ( Cfg.DmaInputFifoDepth   ),
+      .PendingFifoDepth ( Cfg.DmaPendingFifoDepth ),
+      .NSpeculation     ( Cfg.DmaNSpeculation     ),
       .RAWCouplingAvail ( Cfg.DmaRAWCouplingAvail ),
-      .IsTwoD           ( Cfg.DmaConfEnableTwoD   ),
       .axi_mst_req_t    ( axi_mst_req_t ),
       .axi_mst_rsp_t    ( axi_mst_rsp_t ),
       .axi_slv_req_t    ( axi_slv_req_t ),
@@ -1491,11 +1497,14 @@ module cheshire_soc import cheshire_pkg::*; #(
     ) i_idma (
       .clk_i,
       .rst_ni,
-      .testmode_i     ( test_mode_i ),
-      .axi_mst_req_o  ( axi_dma_req           ),
-      .axi_mst_rsp_i  ( axi_in_rsp[AxiIn.dma] ),
-      .axi_slv_req_i  ( dma_cut_req ),
-      .axi_slv_rsp_o  ( dma_cut_rsp )
+      .testmode_i       ( test_mode_i                ),
+      .axi_mst_req_o    ( axi_dma_req                ),
+      .axi_mst_rsp_i    ( axi_in_rsp[AxiIn.dma]      ),
+      .axi_desc_req_o   ( axi_dma_desc_req            ),
+      .axi_desc_rsp_i   ( axi_in_rsp[AxiIn.dma_desc] ),
+      .axi_slv_req_i    ( dma_cut_req                ),
+      .axi_slv_rsp_o    ( dma_cut_rsp                ),
+      .irq_o            (                            )  // TODO: connect to interrupt fabric
     );
 
     if (Cfg.BusErr) begin : gen_dma_bus_err
@@ -1504,7 +1513,7 @@ module cheshire_soc import cheshire_pkg::*; #(
         .IdWidth            ( Cfg.AxiMstIdWidth ),
         .UserErrBits        ( Cfg.AxiUserErrBits ),
         .UserErrBitsOffset  ( Cfg.AxiUserErrLsb ),
-        .NumOutstanding     ( Cfg.DmaNumAxInFlight+Cfg.DmaJobFifoDepth ),
+        .NumOutstanding     ( Cfg.DmaNumAxInFlight+Cfg.DmaInputFifoDepth+Cfg.DmaPendingFifoDepth ),
         .NumStoredErrors    ( 4 ),
         .DropOldest         ( 1'b0 ),
         .axi_req_t          ( axi_mst_req_t ),

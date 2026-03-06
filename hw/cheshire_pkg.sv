@@ -184,10 +184,11 @@ package cheshire_pkg;
     dw_bt   DmaConfMaxWriteTxns;
     aw_bt   DmaConfAmoNumCuts;
     bit     DmaConfAmoPostCut;
-    bit     DmaConfEnableTwoD;
     dw_bt   DmaNumAxInFlight;
     dw_bt   DmaMemSysDepth;
-    aw_bt   DmaJobFifoDepth;
+    aw_bt   DmaInputFifoDepth;
+    aw_bt   DmaPendingFifoDepth;
+    aw_bt   DmaNSpeculation;
     bit     DmaRAWCouplingAvail;
     // Parameters for GPIO
     bit     GpioInputSyncs;
@@ -302,6 +303,7 @@ package cheshire_pkg;
     aw_bt [2**MaxCoresWidth-1:0] cores;
     aw_bt dbg;
     aw_bt dma;
+    aw_bt dma_desc;
     aw_bt slink;
     aw_bt vga;
     aw_bt usb;
@@ -314,8 +316,9 @@ package cheshire_pkg;
     int unsigned i = 0;
     for (int j = 0; j < cfg.NumCores; j++) begin ret.cores[i] = i; i++; end
     ret.dbg = i;
-    if (cfg.Dma)        begin i++; ret.dma   = i; end
-    if (cfg.SerialLink) begin i++; ret.slink = i; end
+    if (cfg.Dma)        begin i++; ret.dma      = i; end
+    if (cfg.Dma)        begin i++; ret.dma_desc = i; end
+    if (cfg.SerialLink) begin i++; ret.slink    = i; end
     if (cfg.Vga)        begin i++; ret.vga   = i; end
     if (cfg.Usb)        begin i++; ret.usb   = i; end
     i++;
@@ -638,10 +641,11 @@ package cheshire_pkg;
     DmaConfMaxWriteTxns : 4,
     DmaConfAmoNumCuts   : 1,
     DmaConfAmoPostCut   : 1,
-    DmaConfEnableTwoD   : 1,
     DmaNumAxInFlight    : 16,
     DmaMemSysDepth      : 8,
-    DmaJobFifoDepth     : 2,
+    DmaInputFifoDepth   : 8,
+    DmaPendingFifoDepth : 8,
+    DmaNSpeculation     : 4,
     DmaRAWCouplingAvail : 1,
     // GPIOs
     GpioInputSyncs    : 1,
